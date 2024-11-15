@@ -47,7 +47,10 @@
 * Shoddy security hardening. If you break it, it is what it is. Just make the list Hoss.
 
 STEP 1:                                                                      
-Usage: sudo ./Obl-Iterate
+Usage: 
+```
+sudo ./Obl-Iterate
+```
 
 STEP 2:
 Choose your option from the prompt.
