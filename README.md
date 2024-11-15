@@ -46,16 +46,18 @@
 * Use Input File
 * Shoddy security hardening. If you break it, it is what it is. Just make the list Hoss.
 
-STEP 1:                                                                      
-Usage: 
+## STEP 1:                                                                      
+
+### Usage:
+
 ```
 sudo ./Obl-Iterate
 ```
 
-STEP 2:
+## STEP 2:
 Choose your option from the prompt.
 
-STEP 3:
+## STEP 3:
 Follow the prompts.
 
 Choose the type of list to generate:
