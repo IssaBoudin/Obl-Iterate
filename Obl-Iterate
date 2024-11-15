@@ -1,0 +1,214 @@
+#!/bin/bash
+
+# Define color codes
+BLUEWHITE='\033[1;47m\033[38;2;0;90;141m'
+GREEN='\033[1;32m'
+REDWHITE='\033[1;41m\033[1;37m'
+NC='\033[0m'  # No Color
+
+# Function to display a simple message without animation
+display_generating_message() {
+  echo -e "${REDWHITE}Generating the list...${NC}"
+}
+
+# Define substitution mappings for special characters (use space to separate multiple substitutions)
+declare -A substitutions=( 
+  ["a"]="@ 4"
+  ["e"]="3"
+  ["i"]="! 1"
+  ["o"]="0"
+  ["s"]="\$ 5"
+)
+
+# Function to generate all possible variations with special character substitutions and lowercase
+generate_all_variations() {
+  local input_string=$1
+  local index=$2
+  local current_variation=$3
+
+  # Base case: if we've processed all characters, print the variation
+  if [[ $index -eq ${#input_string} ]]; then
+    echo "${prefix}${current_variation}${suffix}" >> custom_list.txt
+    return
+  fi
+
+  # Current character in the input string
+  local char="${input_string:index:1}"
+
+  # Determine the lowercase version of the character (if applicable)
+  local lowercase_char="${char,,}"
+
+  # If there are substitutions for this character, loop through them
+  if [[ -n "${substitutions[$char]}" ]]; then
+    # Start by adding the character itself (no substitution)
+    generate_all_variations "$input_string" $((index + 1)) "$current_variation$char"
+
+    # Add the lowercase character (if not already the same)
+    if [[ "$char" != "$lowercase_char" ]]; then
+      generate_all_variations "$input_string" $((index + 1)) "$current_variation$lowercase_char"
+    fi
+
+    # Loop through all substitutions and create variations
+    for sub in ${substitutions[$char]}; do
+      generate_all_variations "$input_string" $((index + 1)) "$current_variation$sub"
+    done
+
+  else
+    # If no substitution, just continue with the original character and lowercase version
+    generate_all_variations "$input_string" $((index + 1)) "$current_variation$char"
+    if [[ "$char" != "$lowercase_char" ]]; then
+      generate_all_variations "$input_string" $((index + 1)) "$current_variation$lowercase_char"
+    fi
+  fi
+}
+
+# Ask the user if they want a number list, alphabetical list, both, or a custom string, with color
+echo -e "${REDWHITE}Choose the type of list to generate:${NC}"
+echo -e "${BLUEWHITE}1) Number List${NC}"
+echo -e "${BLUEWHITE}2) Alphabetical List${NC}"
+echo -e "${BLUEWHITE}3) Both (Alphabetical + Number)${NC}"
+echo -e "${BLUEWHITE}4) Custom String${NC}"
+
+# Initialize attempt counter
+attempts=0
+
+# Loop until the user enters a valid option or exceeds 3 attempts
+while true; do
+  read -p "Enter your choice (1/2/3/4): " choice
+  ((attempts++))
+
+  # Check if the input is valid (must be one of 1, 2, 3, or 4)
+  if [[ "$choice" =~ ^[1-4]$ ]]; then
+    break  # Exit the loop if a valid option is chosen
+  else
+    if ((attempts == 2)); then
+      echo -e "${REDWHITE}I told ya to knock it off!${NC}"
+    elif ((attempts == 3)); then
+      echo -e "${REDWHITE}You've yee-d your last haw...${NC}"
+      exit 1  # Exit the program after 3 failed attempts
+    else
+      echo -e "${REDWHITE}Sorry Hoss, you gotta choose a number.${NC}"
+    fi
+  fi
+done
+
+# Variables for range input and formatting
+start_num=0
+end_num=0
+padding=1  # Default padding width
+prefix=""
+suffix=""
+
+# Get user input for prefixes and suffixes
+read -p "Enter a prefix (leave blank for none): " prefix
+read -p "Enter a suffix (leave blank for none): " suffix
+
+# Get user input based on choice
+if [[ "$choice" == "1" || "$choice" == "3" ]]; then
+  read -p "Enter the starting number: " start_num
+  read -p "Enter the ending number: " end_num
+  read -p "Enter the padding width for numbers (e.g., 1 for no padding, 2 for 01, 3 for 001, etc.): " padding
+fi
+
+# Get user input for alphabetical range (if applicable)
+if [[ "$choice" == "2" || "$choice" == "3" ]]; then
+  read -p "Enter the starting letter (a-z): " start_char
+  read -p "Enter the ending letter (a-z): " end_char
+fi
+
+# Ask the user if they want to render number or letter first (only for combined list)
+if [[ "$choice" == "3" ]]; then
+  echo -e "${REDWHITE}Would you like the number or letter to appear first? (Enter 'n' for number first, 'l' for letter first):${NC}"
+  read -p "" order_choice
+fi
+
+# Ask the user if they want special character variations (only for custom string)
+if [[ "$choice" == "4" ]]; then
+  read -p "Enter the custom string: " custom_string
+  echo -e "${REDWHITE}Would you like to include special character variations? (y/n):${NC}"
+  read -p "" special_variations
+fi
+
+# Clear only the relevant output files based on user choice
+case "$choice" in
+  1) > number_list.txt ;;
+  2) > alphabetical_list.txt ;;
+  3) > combined_list.txt ;;
+  4) > custom_list.txt ;;
+esac
+
+# Display the generating message before generating the list
+display_generating_message
+
+# Generate output based on the user's choice
+if [[ "$choice" == "1" ]]; then
+  # Number list only
+  if [[ $start_num -lt $end_num ]]; then
+    for (( i=start_num; i<=end_num; i++ )); do
+      entry=$(printf "%s%0${padding}d%s" "$prefix" "$i" "$suffix")
+      echo "$entry" >> number_list.txt
+    done
+  else
+    for (( i=start_num; i>=end_num; i-- )); do
+      entry=$(printf "%s%0${padding}d%s" "$prefix" "$i" "$suffix")
+      echo "$entry" >> number_list.txt
+    done
+  fi
+  echo "Number list saved to number_list.txt"
+
+elif [[ "$choice" == "2" ]]; then
+  # Alphabetical list only
+  for letter in $(eval echo {$start_char..$end_char}); do
+    entry="${prefix}${letter}${suffix}"
+    echo "$entry" >> alphabetical_list.txt
+  done
+  echo "Alphabetical list saved to alphabetical_list.txt"
+
+elif [[ "$choice" == "3" ]]; then
+  # Combined list: User can choose order (number first or letter first)
+  if [[ "$order_choice" == "n" ]]; then
+    # Number first
+    for letter in $(eval echo {$start_char..$end_char}); do
+      for (( i=start_num; i<=end_num; i++ )); do
+        entry="${prefix}${i}${letter}${suffix}"
+        echo "$entry" >> combined_list.txt
+      done
+    done
+  elif [[ "$order_choice" == "l" ]]; then
+    # Letter first
+    for letter in $(eval echo {$start_char..$end_char}); do
+      for (( i=start_num; i<=end_num; i++ )); do
+        entry="${prefix}${letter}${i}${suffix}"
+        echo "$entry" >> combined_list.txt
+      done
+    done
+  else
+    echo "Invalid order choice, skipping combined list generation."
+  fi
+  echo "Combined list saved to combined_list.txt"
+
+elif [[ "$choice" == "4" ]]; then
+  # Custom string input and processing
+  if [[ "$special_variations" == "y" || "$special_variations" == "Y" ]]; then
+    generate_all_variations "$custom_string" 0 ""
+  else
+    echo "${prefix}${custom_string}${suffix}" >> custom_list.txt
+  fi
+  echo "Custom string list saved to custom_list.txt"
+fi
+
+# Ask if the user wants to display the results on screen
+echo -e "${REDWHITE}Would you like to display the results on the screen? (y/n):${NC}"
+read -p "" display_choice
+
+if [[ "$display_choice" == "y" || "$display_choice" == "Y" ]]; then
+  echo -e "${GREEN}Displaying the results:${NC}"
+  case "$choice" in
+    1) cat number_list.txt ;;
+    2) cat alphabetical_list.txt ;;
+    3) cat combined_list.txt ;;
+    4) cat custom_list.txt ;;  # This should display the custom list correctly
+  esac
+else
+  echo "Results saved to file but not displayed."
+fi
