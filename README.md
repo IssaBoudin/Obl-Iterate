@@ -44,9 +44,7 @@
 * Special character substitutions
 * Create Output File
 * Use Input File
-* Shoddy security hardening. If you break it, it is what it is. Just make the list Hoss.
-
-## STEP 1:                                                                      
+* Shoddy security hardening. If you break it, it is what it is. Just make the list Hoss.                                                                      
 
 ### Usage:
 
@@ -57,11 +55,9 @@ sudo ./Obl-Iterate
 ## STEP 2:
 Choose your option from the prompt.
 
+![ChooseOption.png](./images/ChooseOption.png)
+
 ## STEP 3:
 Follow the prompts.
 
-Choose the type of list to generate:
-1) Number List
-2) Alphabetical List
-3) Both (Alphabetical + Number)
-4) Custom String
+![Demo.png](./images/Demo.png)
